@@ -8,6 +8,7 @@ from bookbook import latex
 
 sample_dir = Path(__file__).parent / 'sample'
 
+
 def test_sampledir():
     with TemporaryDirectory() as td:
         td = Path(td)
@@ -22,7 +23,6 @@ def test_convert_link():
     assert '\\ref{sec:01-abc}' in res
     assert '.ipynb' not in res
 
-
     sample = "[link](02-def.ipynb#Foo-bar)"
     res = latex.pandoc_convert_links(sample)
     assert '\\ref{foo-bar}' in res
@@ -31,6 +31,7 @@ def test_convert_link():
     # Links to external sites shouldn't be converted
     sample = "[link](http://example.com/01-abc.ipynb)"
     assert '01-abc.ipynb' in latex.pandoc_convert_links(sample)
+
 
 def test_exporter_converts_links():
     out, res = latex.MyLatexExporter().from_filename(

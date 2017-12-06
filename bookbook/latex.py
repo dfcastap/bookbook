@@ -1,4 +1,5 @@
-"""Convert a collection of notebooks to a single PDF, via Latex.
+"""
+Convert a collection of notebooks to a single PDF, via Latex.
 
 - Combines notebooks into one document
 - Inserts Latex labels for each document
@@ -27,6 +28,7 @@ from .filter_links import convert_links
 
 log = logging.getLogger(__name__)
 
+
 def new_latex_cell(source=''):
     return NotebookNode(
         cell_type='raw',
@@ -34,7 +36,10 @@ def new_latex_cell(source=''):
         source=source,
     )
 
-class NoHeader(Exception): pass
+
+class NoHeader(Exception):
+    pass
+
 
 def add_sec_label(cell: NotebookNode, nbname) -> Sequence[NotebookNode]:
     """Adds a Latex \\label{} under the chapter heading.
@@ -63,6 +68,7 @@ def add_sec_label(cell: NotebookNode, nbname) -> Sequence[NotebookNode]:
         res.append(new_markdown_cell(intro_remainder))
     return res
 
+
 def combine_notebooks(notebook_files: Sequence[Path]) -> NotebookNode:
     combined_nb = new_notebook()
 
@@ -86,21 +92,35 @@ def combine_notebooks(notebook_files: Sequence[Path]) -> NotebookNode:
     log.info('Combined %d files' % count)
     return combined_nb
 
+
 mydir = os.path.dirname(os.path.abspath(__file__))
 filter_links = os.path.join(mydir, 'filter_links.py')
 
+listings = Path('listings.tex')
+if not listings.is_file():
+    with open('listings.tex', w) as f:
+        f.write("% listings style")
+
+
 def pandoc_convert_links(source):
-    return pandoc(source, 'markdown', 'latex', extra_args=['--filter', filter_links])
+    return pandoc(source, 'markdown', 'latex',
+                  extra_args=['--filter', filter_links,
+                              '--listings -H', listings,
+                              ]
+                  )
+
 
 class MyLatexExporter(LatexExporter):
     def default_filters(self):
         yield from super().default_filters()
         yield ('resolve_references', convert_links)
 
+
 class MyLatexPDFExporter(PDFExporter):
     def default_filters(self):
         yield from super().default_filters()
         yield ('resolve_references', convert_links)
+
 
 def add_preamble(extra_preamble_file, exporter):
     if extra_preamble_file is None:
@@ -116,14 +136,15 @@ def add_preamble(extra_preamble_file, exporter):
         f.write("((* extends 'article.tplx' *))\n"
                 '((* block header *))\n'
                 '((( super() )))\n'
-               )
+                )
         f.write(extra_preamble)
         f.write('((* endblock header *))\n'
                 )
 
-    # Not using append, because we need an assignment to trigger traitlet change
+    # Not using append because we need an assignment to trigger traitlet change
     exporter.template_path = exporter.template_path + [td]
     exporter.template_file = 'with_extra_preamble'
+
 
 def export(combined_nb: NotebookNode, output_file: Path, pdf=False,
            template_file=None):
@@ -139,10 +160,12 @@ def export(combined_nb: NotebookNode, output_file: Path, pdf=False,
     output, resources = exporter.from_notebook_node(combined_nb, resources)
     writer.write(output, resources, notebook_name=output_file.stem)
 
+
 def combine_and_convert(source_dir: Path, output_file: Path, pdf=False, template_file=None):
     notebook_files = sorted(source_dir.glob('*-*.ipynb'))
     combined_nb = combine_notebooks(notebook_files)
     export(combined_nb, output_file, pdf=pdf, template_file=template_file)
+
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description='Convert a set of notebooks to PDF via Latex')
@@ -158,6 +181,7 @@ def main(argv=None):
 
     logging.basicConfig(level=logging.INFO)
     combine_and_convert(args.source_dir, args.output_file, args.pdf, args.template)
+
 
 if __name__ == '__main__':
     main()
