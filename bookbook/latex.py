@@ -76,7 +76,7 @@ def combine_notebooks(notebook_files: Sequence[Path]) -> NotebookNode:
         try:
             combined_nb.cells.extend(add_sec_label(nb.cells[0], nbname))
         except NoHeader:
-            raise NoHeader("Failed to find header in " + filename)
+            raise NoHeader("Failed to find header in {}".format(filename))
 
         combined_nb.cells.extend(nb.cells[1:])
 
