@@ -25,6 +25,7 @@ from nbconvert.exporters import PDFExporter, LatexExporter
 from nbconvert.writers import FilesWriter
 from nbconvert.utils.pandoc import pandoc
 from .filter_links import convert_links
+from .custom_latex import CustomLatexExporter
 
 log = logging.getLogger(__name__)
 
@@ -109,8 +110,7 @@ def pandoc_convert_links(source):
                               ]
                   )
 
-
-class MyLatexExporter(LatexExporter):
+class MyLatexExporter(CustomLatexExporter):
     def default_filters(self):
         yield from super().default_filters()
         yield ('resolve_references', convert_links)
